@@ -7,8 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import Wav2Vec2Processor
 from transformers import BertTokenizer
 
-processor = Wav2Vec2Processor.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                              local_files_only=True)
+processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
 
 def load_audio(audio_path):
     sampling_rate = 16000
@@ -67,13 +66,3 @@ def getCLIPDataLoader(data_path):
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True, drop_last=True)
     return dataloader
 
-
-if __name__ == "__main__":
-    train_loader = getCLIPDataLoader("C:/Users/86134/Desktop/data/RAVDESS")
-    print(len(train_loader))
-    for data in train_loader:
-        audio = data[0]
-        rig = data[1]
-        image = data[2]
-        text = data[3]
-    torch.save(train_loader, "C:/Users/86134/Desktop/data/RAVDESS/clip_train.pth")

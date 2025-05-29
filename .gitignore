@@ -4,4 +4,6 @@
 /layers/__pycache__
 /models/__pycache__
 /result
+/data/corpus_test.csv
+/data/corpus_train.csv
 *.pth

@@ -9,8 +9,7 @@ label_dim = 174
 
 
 def read_data(audio_path, rig_path):
-    processor = Wav2Vec2Processor.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                                  local_files_only=True)
+    processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
     sampling_rate = 16000
 
     speech_array, sampling_rate = librosa.load(audio_path, sr=sampling_rate)

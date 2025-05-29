@@ -1,6 +1,7 @@
 import argparse
 import os
 import torch
+import pathlib
 from models.audio_semantic import AudioSemanticNet
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -17,9 +18,8 @@ if __name__ == '__main__':
     parser.add_argument("--weight_path", type=str, default="weights/audio_semantic.pth")
     args = parser.parse_args()
 
-    save_path = "animation/demo_label"
-    if not os.path.exists(save_path):
-        os.mkdir(save_path)
+    save_path = "result/demo_label"
+    pathlib.Path(save_path).mkdir(parents=True, exist_ok=True)
 
     # build model
     model = AudioSemanticNet(args).to(device)

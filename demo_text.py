@@ -1,6 +1,7 @@
 import argparse
 import os
 import torch
+import pathlib
 from models.clip_emotion import CLIPNet
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -18,9 +19,8 @@ if __name__ == '__main__':
     parser.add_argument("--weight_path", type=str, default="weights/clip_emotion.pth")
     args = parser.parse_args()
 
-    save_path = "animation/demo_text"
-    if not os.path.exists(save_path):
-        os.mkdir(save_path)
+    save_path = "result/demo_text"
+    pathlib.Path(save_path).mkdir(parents=True, exist_ok=True)
 
     # build model
     model = CLIPNet(args).to(device)

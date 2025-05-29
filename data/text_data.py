@@ -10,8 +10,7 @@ from transformers import BertTokenizer
 
 label_dim = 174
 emotion_id = {"ang": 0, "dis": 1, "fea": 2, "hap": 3, "neu": 4, "sad": 5, "sur": 6}
-processor = Wav2Vec2Processor.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                              local_files_only=True)
+processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
 
 
 def load_audio(audio_path):
@@ -76,13 +75,3 @@ def getTextDataLoader(train_path, valid_path, train_text, test_text):
     valid_loader = DataLoader(valid_dataset, batch_size=1, shuffle=True)
     return train_loader, valid_loader
 
-
-if __name__ == "__main__":
-    train, valid = getTextDataLoader("C:/Users/18158/Desktop/data/all_emotions/train",
-                                 "C:/Users/18158/Desktop/data/all_emotions/validation",
-                                 "corpus_train.csv",
-                                 "corpus_test.csv")
-    print(len(train))
-    print(len(valid))
-    torch.save(train, "C:/Users/18158/Desktop/data/all_emotions/text_train.pth")
-    torch.save(valid, "C:/Users/18158/Desktop/data/all_emotions/text_valid.pth")
