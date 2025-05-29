@@ -7,4 +7,4 @@
 /data/corpus_test.csv
 /data/corpus_train.csv
 *.pth
-data_preprocess/gpt_api.py
+/data_preprocess

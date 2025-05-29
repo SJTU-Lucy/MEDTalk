@@ -35,10 +35,8 @@ class CLIPNet(nn.Module):
         self.decoder = Decoder(2 * args.latent_dim, args.hidden_dim, args.input_dim)
 
         # audio content encoder
-        self.audio_encoder_config = Wav2Vec2Config.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                                                   local_files_only=True)
-        self.audio_content_encoder = Wav2Vec2Model.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                                                   local_files_only=True)
+        self.audio_encoder_config = Wav2Vec2Config.from_pretrained("facebook/wav2vec2-base-960h")
+        self.audio_content_encoder = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
         self.audio_content_encoder.feature_extractor._freeze_parameters()
         hidden_size = self.audio_encoder_config.hidden_size
         self.audio_content_map = Encoder(hidden_size, args.hidden_dim, args.latent_dim)
@@ -52,10 +50,8 @@ class CLIPNet(nn.Module):
         self.fusion_predictor = Encoder(input_dim=hidden_size, hidden_dim=256, latent_dim=1)
 
         # clip emotion embedding
-        self.clip_encoder = CLIPModel.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/clip-vit-base-patch32",
-                                                      local_files_only=True)
-        self.clip_processor = CLIPProcessor.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/clip-vit-base-patch32",
-                                                  local_files_only=True)
+        self.clip_encoder = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+        self.clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
         self.clip_text_map = Encoder(512, 256, args.hidden_dim)
         self.clip_image_map = Encoder(512, 256, args.hidden_dim)
 
@@ -83,8 +79,6 @@ class CLIPNet(nn.Module):
             param.requires_grad = False
         for name, param in self.fusion_predictor.named_parameters():
             param.requires_grad = False
-        # for name, param in self.semantic_emotion_map.named_parameters():
-        #     param.requires_grad = False
 
     def decode(self, cont_embedding, emo_embedding):
         concat_embedding = torch.cat((emo_embedding, cont_embedding), 2)
@@ -236,8 +230,7 @@ class CLIPNet(nn.Module):
 
     def load_data(self, audio_path):
         # read audio data
-        processor = Wav2Vec2Processor.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                                      local_files_only=True)
+        processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
         sampling_rate = 16000
 
         speech_array, sampling_rate = librosa.load(audio_path, sr=sampling_rate)

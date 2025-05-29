@@ -45,10 +45,8 @@ class AudioSemanticNet(nn.Module):
         self.decoder = Decoder(2 * args.latent_dim, args.hidden_dim, args.input_dim)
 
         # audio content encoder
-        self.audio_encoder_config = Wav2Vec2Config.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                                                   local_files_only=True)
-        self.audio_content_encoder = Wav2Vec2Model.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                                                   local_files_only=True)
+        self.audio_encoder_config = Wav2Vec2Config.from_pretrained("facebook/wav2vec2-base-960h")
+        self.audio_content_encoder = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
         self.audio_content_encoder.feature_extractor._freeze_parameters()
         hidden_size = self.audio_encoder_config.hidden_size
         self.audio_content_map = Encoder(hidden_size, args.hidden_dim, args.latent_dim)
@@ -59,10 +57,8 @@ class AudioSemanticNet(nn.Module):
                                      disable_log=True,
                                      disable_pbar=True,
                                      device="cuda")
-        self.text_tokenizer = BertTokenizer.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/chinese-roberta-wwm-ext",
-                                              local_files_only=True)
-        self.text_encoder = BertModel.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/chinese-roberta-wwm-ext",
-                                              local_files_only=True)
+        self.text_tokenizer = BertTokenizer.from_pretrained("hfl/chinese-roberta-wwm-ext")
+        self.text_encoder = BertModel.from_pretrained("hfl/chinese-roberta-wwm-ext")
         self.fusion_predictor = AudioTextFusion(embed_dim=hidden_size, num_heads=8)
 
         # emotion embedding
@@ -258,8 +254,7 @@ class AudioSemanticNet(nn.Module):
 
     def load_data(self, audio_path):
         # read audio data
-        processor = Wav2Vec2Processor.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                                      local_files_only=True)
+        processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
         sampling_rate = 16000
 
         speech_array, sampling_rate = librosa.load(audio_path, sr=sampling_rate)

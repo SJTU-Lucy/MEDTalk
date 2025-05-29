@@ -41,10 +41,8 @@ class AudioContentNet(nn.Module):
         self.decoder = Decoder(2 * args.latent_dim, args.hidden_dim, args.input_dim)
 
         # load frozen wav2vec2.0 audio encoder
-        self.audio_encoder_config = Wav2Vec2Config.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                                                   local_files_only=True)
-        self.audio_content_encoder = Wav2Vec2Model.from_pretrained("C:/Users/86134/Desktop/pretrain_weights/wav2vec2-base-960h",
-                                                                   local_files_only=True)
+        self.audio_encoder_config = Wav2Vec2Config.from_pretrained("facebook/wav2vec2-base-960h")
+        self.audio_content_encoder = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
         self.audio_content_encoder.feature_extractor._freeze_parameters()
         hidden_size = self.audio_encoder_config.hidden_size
         self.audio_content_map = Encoder(hidden_size, args.hidden_dim, args.latent_dim)
