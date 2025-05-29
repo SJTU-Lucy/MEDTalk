@@ -1,0 +1,11 @@
+funasr==1.2.6
+librosa==0.11.0
+numpy==2.2.6
+openai==1.82.0
+openai_whisper==20240930
+opencv_python==4.11.0.86
+pandas==2.2.3
+Pillow==11.2.1
+scipy==1.15.3
+tqdm==4.67.1
+transformers==4.43.0
