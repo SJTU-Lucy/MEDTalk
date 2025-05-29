@@ -4,5 +4,4 @@
 /layers/__pycache__
 /models/__pycache__
 /result
-/weights
-main.py
+*.pth

@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument("--weight_path", type=str, default="weights/audio_semantic.pth")
     args = parser.parse_args()
 
-    save_path = "result/demo_label"
+    save_path = "animation/demo_label"
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
