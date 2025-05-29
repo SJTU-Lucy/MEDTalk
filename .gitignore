@@ -1,0 +1,8 @@
+/.idea
+/data/__pycache__
+/data_preprocess/.idea
+/layers/__pycache__
+/models/__pycache__
+/result
+/weights
+main.py
