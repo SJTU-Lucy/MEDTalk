@@ -260,28 +260,25 @@ class AudioSemanticNet(nn.Module):
         speech_array, sampling_rate = librosa.load(audio_path, sr=sampling_rate)
         audio_data = np.squeeze(processor(speech_array, sampling_rate=sampling_rate).input_values)
 
-        # load emotion label
-        base_file = os.path.basename(audio_path)
-        emotion = emotion_id[base_file[0:3]]
-
         # get text data
         result = self.asr.transcribe(audio_path, language='Chinese')
         text = result["text"]
 
         audio_data = torch.tensor(audio_data).to(torch.float32).to(device)
-        emotion = torch.tensor([emotion]).to(torch.long).to(device)
         audio_data = torch.unsqueeze(audio_data, dim=0)
         text = [text]
         audio_len = audio_data.shape[1]
         seq_len = int(audio_len * 60 / 16000)
         print(text, seq_len)
 
-        return audio_data, seq_len, emotion, text
+        return audio_data, seq_len, text
 
-    def validate(self, audio_path, save_path):
+    def validate(self, audio_path, emotion, save_path):
         self.asr = whisper.load_model("base")
-        audio_data, seq_len, emotion, text = self.load_data(audio_path)
-        recon_rig = self.forward_validate(audio_data, seq_len, emo=emotion, text=text)
+        audio_data, seq_len, text = self.load_data(audio_path)
+        emo = emotion_id[emotion[0:3]]
+        emo = torch.tensor([emo]).to(torch.long).to(device)
+        recon_rig = self.forward_validate(audio_data, seq_len, emo=emo, text=text)
         recon_rig = torch.squeeze(recon_rig)
         recon_rig = recon_rig.detach().cpu().numpy()
         recon_rig = recon_rig.T

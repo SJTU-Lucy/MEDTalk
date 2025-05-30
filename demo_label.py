@@ -14,6 +14,7 @@ if __name__ == '__main__':
     parser.add_argument("--emotion_dim", type=int, default=7)
     parser.add_argument("--max_duration", type=int, default=5000)
     parser.add_argument("--period", type=int, default=30)
+    parser.add_argument("--emotion", type=str, default="angry", help="angry/disgust/fear/happy/neutral/sad/surprised")
     parser.add_argument("--audio", type=str, default="assets/audio/angry_gd01_001_006.wav")
     parser.add_argument("--weight_path", type=str, default="weights/audio_semantic.pth")
     args = parser.parse_args()
@@ -31,4 +32,4 @@ if __name__ == '__main__':
     else:
         save_file = os.path.join(save_path, os.path.basename(audio_file).replace(".wav", ".txt"))
         print(audio_file, save_file)
-        model.validate(audio_file, save_file)
+        model.validate(audio_file, args.emotion, save_file)
