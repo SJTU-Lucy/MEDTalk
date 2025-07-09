@@ -60,17 +60,12 @@ class SeqDataset(Dataset):
 
         # Stage 3: Cross Recontruction
         rig11 = self._rig[eidx1][cidx1]
-        rig12 = self._rig[eidx1][cidx2]
-        rig21 = self._rig[eidx2][cidx1]
         rig22 = self._rig[eidx2][cidx2]
-
         cross_seq_len = min(rig11.shape[0], rig22.shape[0])
         rig11 = rig11[:cross_seq_len]
-        rig12 = rig12[:cross_seq_len]
-        rig21 = rig21[:cross_seq_len]
         rig22 = rig22[:cross_seq_len]
 
-        return {"self": rig, "emotion": [rig01, rig02], "content": [rig10, rig20], "cross": [rig11, rig12, rig21, rig22]}
+        return {"self": rig, "emotion": [rig01, rig02], "content": [rig10, rig20], "cross": [rig11, rig22]}
 
     def __len__(self):
         return self._seq_len * self._emotion_num

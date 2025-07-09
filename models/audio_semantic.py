@@ -140,7 +140,7 @@ class AudioSemanticNet(nn.Module):
         # loss calculation
         gt_intensity = get_intensity(label)
         out_intensity = get_intensity(x_recon)
-        inten_loss = F.mse_loss(pred_intensity, gt_intensity) + F.mse_loss(out_intensity, gt_intensity)
+        inten_loss = F.mse_loss(out_intensity, gt_intensity)
         cont_sim = F.cosine_similarity(emo_feature.view(-1), motion_emo.view(-1), dim=-1)
         emb_loss = 1 - cont_sim
         recon_loss = F.mse_loss(x_recon, label)

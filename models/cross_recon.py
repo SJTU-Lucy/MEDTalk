@@ -4,7 +4,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from data.sequence_data import process_rig
 from layers.encoder import Encoder
 from layers.decoder import Decoder
 
@@ -42,13 +41,7 @@ class CrossReconNet(nn.Module):
         x_recon = self.decode(cont_embedding, emo_embedding)
         recon_loss = F.mse_loss(x_recon, x)
 
-        recon_emo = self.emo_encoder(x_recon)
-        recon_cont = self.cont_encoder(x_recon)
-        emo_sim = F.cosine_similarity(emo_embedding.view(-1), recon_emo.view(-1), dim=-1)
-        cont_sim = F.cosine_similarity(cont_embedding.view(-1), recon_cont.view(-1), dim=-1)
-        emb_loss = 0.1 * ((1 - emo_sim) + (1 - cont_sim))
-
-        return x_recon, recon_loss, emb_loss
+        return x_recon, recon_loss
 
     def forward_cross(self, x11, x12, x21, x22):
         cont_emb1 = self.cont_encoder(x11)
@@ -65,21 +58,34 @@ class CrossReconNet(nn.Module):
         recon_loss21 = F.mse_loss(x21, recon21)
         recon_loss22 = F.mse_loss(x22, recon22)
 
-        emo12 = self.emo_encoder(recon12)
-        emo21 = self.emo_encoder(recon21)
-        cont12 = self.cont_encoder(recon12)
-        cont21 = self.cont_encoder(recon21)
-        emo1_sim = F.cosine_similarity(emo_emb1.view(-1), emo12.view(-1), dim=-1)
-        emo2_sim = F.cosine_similarity(emo_emb2.view(-1), emo21.view(-1), dim=-1)
-        cont1_sim = F.cosine_similarity(cont_emb1.view(-1), cont21.view(-1), dim=-1)
-        cont2_sim = F.cosine_similarity(cont_emb2.view(-1), cont12.view(-1), dim=-1)
-        emb_loss = 0.1 * ((1 - emo1_sim) + (1 - emo2_sim) + (1 - cont1_sim) + (1 - cont2_sim))
+        total_loss = recon_loss11 + recon_loss12 + recon_loss21 + recon_loss22
 
-        total_loss = recon_loss11 + recon_loss12 + recon_loss21 + recon_loss22 + emb_loss
+        return ([recon11, recon12, recon21, recon22],
+                [recon_loss11, recon_loss12, recon_loss21, recon_loss22],
+                total_loss)
 
-        return [recon11, recon12, recon21, recon22], \
-               [recon_loss11, recon_loss12, recon_loss21, recon_loss22, emb_loss], \
-               total_loss
+    def forward_cycle(self, x11, x22):
+        cont_emb1 = self.cont_encoder(x11)
+        cont_emb2 = self.cont_encoder(x22)
+        emo_emb1 = self.emo_encoder(x11)
+        emo_emb2 = self.emo_encoder(x22)
+        recon12 = self.decode(cont_emb2, emo_emb1)
+        recon21 = self.decode(cont_emb1, emo_emb2)
+
+        cont_emb1 = self.cont_encoder(recon21)
+        cont_emb2 = self.cont_encoder(recon12)
+        emo_emb1 = self.emo_encoder(recon12)
+        emo_emb2 = self.emo_encoder(recon21)
+        recon11 = self.decode(cont_emb1, emo_emb1)
+        recon22 = self.decode(cont_emb2, emo_emb2)
+
+        recon_loss11 = F.mse_loss(x11, recon11)
+        recon_loss22 = F.mse_loss(x22, recon22)
+        total_loss = recon_loss11 + recon_loss22
+
+        return ([recon11, recon22],
+                [recon_loss11, recon_loss22],
+                total_loss)
 
     def load_weight(self, weight_path):
         weight = torch.load(weight_path, map_location=device)
@@ -88,16 +94,18 @@ class CrossReconNet(nn.Module):
 
     def do_train(self, train_loader):
         self.train_loader = train_loader
+        # self-reconstruction
         self.do_reconstruct()
-        self.do_emotion()
+        # overlap exchange
         self.do_content()
-        self.do_cross()
+        self.do_emotion()
+        # cycle exchange
+        self.do_cycle()
 
     def do_reconstruct(self):
         iteration = 0
         for e in range(self.epoch):
             loss_log = []
-            emb_log = []
             self.train()
             pbar = tqdm(enumerate(self.train_loader), total=len(self.train_loader))
             self.optimizer.zero_grad()
@@ -105,15 +113,14 @@ class CrossReconNet(nn.Module):
             for i, data in pbar:
                 iteration += 1
                 rig = data["self"].to(torch.float32).to(device)
-                x_recon, loss, emb_loss = self.forward_single(rig)
+                x_recon, loss = self.forward_single(rig)
                 loss.backward()
                 loss_log.append(loss.item())
-                emb_log.append(emb_loss.item())
                 if i % self.gradient_accumulation_steps == 0:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
-                pbar.set_description("(Epoch {}, iteration {}) Emb Loss:{:.7f} Recon loss:{:.7f}"
-                        .format((e + 1), iteration, np.mean(emb_log), np.mean(loss_log)))
+                pbar.set_description("(Epoch {}, iteration {}) Recon loss:{:.7f}"
+                        .format((e + 1), iteration, np.mean(loss_log)))
 
     def do_emotion(self):
         iteration = 0
@@ -123,7 +130,6 @@ class CrossReconNet(nn.Module):
             loss12_log = []
             loss21_log = []
             loss22_log = []
-            emb_log = []
             self.train()
             pbar = tqdm(enumerate(self.train_loader), total=len(self.train_loader))
             self.optimizer.zero_grad()
@@ -139,14 +145,13 @@ class CrossReconNet(nn.Module):
                 loss12_log.append(loss_list[1].item())
                 loss21_log.append(loss_list[2].item())
                 loss22_log.append(loss_list[3].item())
-                emb_log.append(loss_list[4].item())
                 if i % self.gradient_accumulation_steps == 0:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
                 pbar.set_description("(Epoch {}, iteration {}) Loss11:{:.7f} Loss12:{:.7f} Loss21:{:.7f} "
-                                     "Loss22:{:.7f} EmbLoss:{:.7f} Total loss:{:.7f}"
+                                     "Loss22:{:.7f} Total loss:{:.7f}"
                         .format((e + 1), iteration, np.mean(loss11_log), np.mean(loss12_log),
-                                np.mean(loss21_log), np.mean(loss22_log), np.mean(emb_log), np.mean(loss_log)))
+                                np.mean(loss21_log), np.mean(loss22_log), np.mean(loss_log)))
 
     def do_content(self):
         iteration = 0
@@ -156,7 +161,6 @@ class CrossReconNet(nn.Module):
             loss12_log = []
             loss21_log = []
             loss22_log = []
-            emb_log = []
             self.train()
             pbar = tqdm(enumerate(self.train_loader), total=len(self.train_loader))
             self.optimizer.zero_grad()
@@ -172,48 +176,38 @@ class CrossReconNet(nn.Module):
                 loss12_log.append(loss_list[1].item())
                 loss21_log.append(loss_list[2].item())
                 loss22_log.append(loss_list[3].item())
-                emb_log.append(loss_list[4].item())
                 if i % self.gradient_accumulation_steps == 0:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
                 pbar.set_description("(Epoch {}, iteration {}) Loss11:{:.7f} Loss12:{:.7f} Loss21:{:.7f} "
-                                     "Loss22:{:.7f} EmbLoss:{:.7f} Total loss:{:.7f}"
+                                     "Loss22:{:.7f} Total loss:{:.7f}"
                         .format((e + 1), iteration, np.mean(loss11_log), np.mean(loss12_log),
-                                np.mean(loss21_log), np.mean(loss22_log), np.mean(emb_log), np.mean(loss_log)))
+                                np.mean(loss21_log), np.mean(loss22_log), np.mean(loss_log)))
 
-    def do_cross(self):
+    def do_cycle(self):
         iteration = 0
         for e in range(self.epoch):
             loss_log = []
             loss11_log = []
-            loss12_log = []
-            loss21_log = []
             loss22_log = []
-            emb_log = []
             self.train()
             pbar = tqdm(enumerate(self.train_loader), total=len(self.train_loader))
             self.optimizer.zero_grad()
 
             for i, data in pbar:
                 iteration += 1
-                rig11, rig12, rig21, rig22 = data["cross"]
-                rig11, rig12, rig21, rig22 = rig11.to(torch.float32).to(device), rig12.to(torch.float32).to(device),\
-                                             rig21.to(torch.float32).to(device), rig22.to(torch.float32).to(device)
-                recon_list, loss_list, loss = self.forward_cross(rig11, rig12, rig21, rig22)
+                rig11, rig22 = data["cross"]
+                rig11, rig22 = rig11.to(torch.float32).to(device), rig22.to(torch.float32).to(device)
+                recon_list, loss_list, loss = self.forward_cycle(rig11, rig22)
                 loss.backward()
                 loss_log.append(loss.item())
                 loss11_log.append(loss_list[0].item())
-                loss12_log.append(loss_list[1].item())
-                loss21_log.append(loss_list[2].item())
-                loss22_log.append(loss_list[3].item())
-                emb_log.append(loss_list[4].item())
+                loss22_log.append(loss_list[1].item())
                 if i % self.gradient_accumulation_steps == 0:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
-                pbar.set_description("(Epoch {}, iteration {}) Loss11:{:.7f} Loss12:{:.7f} Loss21:{:.7f} "
-                                     "Loss22:{:.7f} EmbLoss:{:.7f} Total loss:{:.7f}"
-                        .format((e + 1), iteration, np.mean(loss11_log), np.mean(loss12_log),
-                                np.mean(loss21_log), np.mean(loss22_log), np.mean(emb_log), np.mean(loss_log)))
+                pbar.set_description("(Epoch {}, iteration {}) Loss11:{:.7f} Loss22:{:.7f} Total loss:{:.7f}"
+                        .format((e + 1), iteration, np.mean(loss11_log), np.mean(loss22_log), np.mean(loss_log)))
 
         torch.save(self.state_dict(), os.path.join(self.save_path, self.save_name))
 
@@ -227,7 +221,7 @@ class CrossReconNet(nn.Module):
 
     def validate(self, rig_path, save_path):
         rig_data, rig_length = self.read_rig(rig_path)
-        recon_rig, _, _ = self.forward_single(rig_data)
+        recon_rig, _ = self.forward_single(rig_data)
         recon_rig = torch.squeeze(recon_rig)
         recon_rig = recon_rig.detach().cpu().numpy()
         np.savetxt(save_path, recon_rig, delimiter=",")

@@ -59,3 +59,20 @@ The predicted expressions are formatted as 174-dimensional metahuman controller 
 **(2) Unreal Engine 5**
 
 Unlike Maya, the output controller rig sequences cannot be directly be imported into UE5. So we use Maya as the import intermediary, exporting **.fbx** file by Maya, and then import it into UE5. The workflow is introduced by this video: [How to Rig and Animate a Metahuman: Maya to Unreal Engine 5 Workflow - YouTube](https://www.youtube.com/watch?v=OYjq4aRgKWg). As for setting key frames, *set_frames.py* can be used to set frame-wise controller values in Maya. 
+
+### 4.Citation
+
+If you find our work helpful for your research, please cite our paper:
+
+```
+@misc{liu2025medtalkmultimodalcontrolled3d,
+      title={MEDTalk: Multimodal Controlled 3D Facial Animation with Dynamic Emotions by Disentangled Embedding}, 
+      author={Chang Liu and Ye Pan and Chenyang Ding and Susanto Rahardja and Xiaokang Yang},
+      year={2025},
+      eprint={2507.06071},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2507.06071}, 
+}
+```
+

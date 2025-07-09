@@ -16,16 +16,6 @@ from data.audio_data import read_data
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-def LipLoss(pred_rig, gt_rig):
-    indices = list(range(3, 13)) + list(range(46, 92)) + list(range(115, 161))
-    pred_lip = pred_rig[:, :, indices]
-    gt_lip = gt_rig[:, :, indices]
-    lip_loss = nn.MSELoss()(pred_lip, gt_lip)
-
-    return lip_loss
-
-
 class AudioContentNet(nn.Module):
     def __init__(self, args):
         super(AudioContentNet, self).__init__()
@@ -81,8 +71,7 @@ class AudioContentNet(nn.Module):
 
         emb_loss = 1 - cont_sim
         recon_loss = F.mse_loss(x_recon, label)
-        lip_loss = LipLoss(x_recon, label)
-        loss = recon_loss + 0.1 * emb_loss + lip_loss * 2
+        loss = recon_loss + 0.1 * emb_loss
 
         return x_recon, recon_loss, emb_loss, loss
 
