@@ -65,14 +65,11 @@ Unlike Maya, the output controller rig sequences cannot be directly be imported 
 If you find our work helpful for your research, please cite our paper:
 
 ```
-@misc{liu2025medtalkmultimodalcontrolled3d,
-      title={MEDTalk: Multimodal Controlled 3D Facial Animation with Dynamic Emotions by Disentangled Embedding}, 
-      author={Chang Liu and Ye Pan and Chenyang Ding and Susanto Rahardja and Xiaokang Yang},
-      year={2025},
-      eprint={2507.06071},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2507.06071}, 
+@article{liu2025medtalk,
+  title={MEDTalk: Multimodal Controlled 3D Facial Animation with Dynamic Emotions by Disentangled Embedding},
+  author={Liu, Chang and Pan, Ye and Ding, Chenyang and Rahardja, Susanto and Yang, Xiaokang},
+  journal={arXiv preprint arXiv:2507.06071},
+  year={2025}
 }
 ```
 
